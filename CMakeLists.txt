@@ -12,6 +12,11 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 ADD_DEFINITIONS(-DCUTELOGGER_LIBRARY)
 
 INCLUDE_DIRECTORIES(BEFORE include)
+if (CUTELOGGER_BUILD_STATIC_LIB)
+    set(LIB_TYPE "STATIC")
+else()
+    set(LIB_TYPE "SHARED")
+endif()
 
 SET(sources
   src/Logger.cpp
@@ -42,14 +47,17 @@ ENDIF(WIN32)
 
 SET(library_target CuteLogger)
 
-ADD_LIBRARY(${library_target} SHARED ${sources} ${includes})
+ADD_LIBRARY(${library_target} ${LIB_TYPE} ${sources} ${includes})
 TARGET_LINK_LIBRARIES(
   ${library_target}
   Qt${QT_VERSION_MAJOR}::Core
 )
 target_include_directories(${library_target} PUBLIC include)
 
-INSTALL(TARGETS ${library_target} DESTINATION lib)
+INSTALL(TARGETS ${library_target}
+  LIBRARY DESTINATION lib
+  PUBLIC_HEADER DESTINATION include/CuteLogger
+)
 
 SET(ENABLE_TESTS OFF CACHE BOOL "Enable building CuteLogger tests")
 IF (ENABLE_TESTS)
