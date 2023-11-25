@@ -22,7 +22,10 @@
 #include <QSemaphore>
 #include <QDateTime>
 #include <QIODevice>
+
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
 #include <QTextCodec>
+#endif
 
 #if defined(Q_OS_ANDROID)
 #  include <android/log.h>
@@ -600,8 +603,14 @@ Logger::~Logger()
 
   // Cleanup appenders
   QMutexLocker appendersLocker(&d->loggerMutex);
+  #if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
   QSet<AbstractAppender*> deleteList(QSet<AbstractAppender*>::fromList(d->appenders));
   deleteList.unite(QSet<AbstractAppender*>::fromList(d->categoryAppenders.values()));
+#else
+  QSet<AbstractAppender*> deleteList(d->appenders.begin(), d->appenders.end());
+  auto cal = d->categoryAppenders.values();
+  deleteList.unite(QSet<AbstractAppender*>(cal.begin(), cal.end()));
+#endif
   qDeleteAll(deleteList);
 
   appendersLocker.unlock();
@@ -1032,7 +1041,11 @@ void LoggerTimingHelper::start(const char* msg, ...)
 {
   va_list va;
   va_start(va, msg);
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
   m_block = QString().vsprintf(msg, va);
+#else
+  m_block = QString().vasprintf(msg, va);
+#endif
   va_end(va);
 
   m_time.start();
@@ -1062,7 +1075,7 @@ LoggerTimingHelper::~LoggerTimingHelper()
   else
     message = QString(QLatin1String("\"%1\" finished in ")).arg(m_block);
 
-  int elapsed = m_time.elapsed();
+  auto elapsed = m_time.elapsed();
   if (elapsed >= 10000 && m_timingMode == Logger::TimingAuto)
     message += QString(QLatin1String("%1 s.")).arg(elapsed / 1000);
   else
