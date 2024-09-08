@@ -19,6 +19,8 @@ else()
     set(LIB_TYPE "SHARED")
 endif()
 
+set(LIBRARY_OUTPUT_PATH ${IDE_LIBRARY_PATH})
+
 SET(sources
   src/Logger.cpp
   src/AbstractAppender.cpp
